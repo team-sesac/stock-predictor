@@ -7,20 +7,21 @@ class LSTMNet(nn.Module):
                 hidden_size: int,
                 seq_length: int, 
                 output_size: int,
-                layers: int):
+                layers: int,
+                drop_out: float=0):
         
         super(LSTMNet, self).__init__()
         self.hidden_size = hidden_size
         self.seq_length = seq_length
         self.output_size = output_size
-        self.layers = layers 
+        self.layers = layers
         
-        self.lstm = nn.LSTM(input_size=input_size, 
+        self.lstm = nn.LSTM(input_size=input_size,
                             hidden_size=hidden_size,
                             num_layers=layers,
-                            dropout=0,
+                            dropout=drop_out,
                             batch_first=True)
-        self.fc = nn.Linear(in_features=hidden_size, out_features=output_size, bais=True)
+        self.fc = nn.Linear(in_features=hidden_size, out_features=output_size, bias=True)
         
     def reset_hidden_state(self):
         self.hidden = (
