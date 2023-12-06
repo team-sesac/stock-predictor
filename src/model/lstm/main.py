@@ -18,6 +18,8 @@ num_features = len(data.columns)
 train_size = 0.8
 train_batch_size = 100
 valid_batch_size = 100
+target = "Close"
+scale_type = "standard" # "standard" or "min_max"
 
 # 하이퍼 파라미터
 SEQ_LENGTH = 7
@@ -28,8 +30,8 @@ NUM_LAYERS = 2
 DROP_OUT = 0.1
 
 # 1. DataLodaer
-scaler = Scaler(scale_type="standard")
-dataloader = LSTMDataLoader(data=data, target="Close", scaler=scaler)
+scaler = Scaler(scale_type=scale_type)
+dataloader = LSTMDataLoader(data=data, target=target, scaler=scaler)
 dataloaders, datasets = dataloader.make_dataset(
     train_size=train_size,
     train_batch_size=train_batch_size,
