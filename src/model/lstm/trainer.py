@@ -1,11 +1,15 @@
+from tkinter import image_names
 import torch
 import torch.nn as nn
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 from scaler import Scaler
 from earlystop import EarlyStopping
 from hyperparameter import HyperParameter
+from utils import get_current_time, mkdir, write_text
 
 class LSTMTrainer():
     
@@ -25,6 +29,8 @@ class LSTMTrainer():
         self.valid_data_sets = valid_data_sets
         self.device = hyper_parameter.get_device()
         self.scaler = scaler
+        self.hyper_parameter = hyper_parameter
+        self.result = {}
         
     def train(self, verbose=10, patience=10):
 
@@ -89,7 +95,6 @@ class LSTMTrainer():
     
     def _perform_eval_metrics(self, pred, y):
         eval = {}
-        print(len(y))
         mae = np.mean(np.abs(y-pred))
         eval["MAE(\u2193)"] = mae
         mape = np.mean(np.abs((y-pred) / y) * 100)
@@ -106,7 +111,7 @@ class LSTMTrainer():
         eval["R2(\u2191)"] = r2
         return eval
     
-    def visualization(self):
+    def save_result(self, learn_topic, path, description):
         epochs = len(self.train_epoch_losses)
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(9, 8))
         # loss graph
@@ -136,5 +141,52 @@ class LSTMTrainer():
             y -= 0.12
         axe_eval.axis("off")
         
+        plt.tight_layout()
+        
+        self._save_files(learn_topic=learn_topic, path=path, description=description, predict=(test_y, pred))
+        
+    def _save_files(self, learn_topic, path, description, predict: tuple[np.ndarray, np.ndarray]):
+        
+        time = get_current_time()
+        save_path = f"{path}{learn_topic}) {time}/"
+        mkdir(save_path)
+        
+        description_path = save_path + "description.txt"
+        text = f"<description>\n{description}"
+        write_text(path=description_path, text=text)
+        
+        # 1. 하이퍼 파라미터 저장
+        hyper_parameter_path = save_path + "hyper_paramters.csv"
+        hyper_dict = vars(self.hyper_parameter)
+        pd.DataFrame(data=hyper_dict, index=[0]).to_csv(hyper_parameter_path, index=False)
+        
+        # 2. 손실함수
+        epoch_loss_dict = {
+            "train": [ round(loss, 4) for loss in self.train_epoch_losses],
+            "valid": [ round(loss, 4) for loss in self.valid_epoch_losses]
+        }
+        epoch_losses_path = save_path + "epoch_losses.csv"
+        pd.DataFrame(data=epoch_loss_dict).to_csv(epoch_losses_path, index=False)
+        
+        # 3. 예측
+        true, pred = predict
+        pred_dict = {
+            "true": np.round(true, decimals=3).flatten(),
+            "pred": np.round(pred, decimals=3).flatten()
+        }
+        predict_path = save_path + "predict.csv"
+        pd.DataFrame(pred_dict).to_csv(predict_path, index=False)
+        
+        # image
+        image_path = save_path + "visualization.png"
+        plt.savefig(image_path)
+        self.result["img_path"] = image_path
+        plt.close()
+        
+    def visualization(self):
+        img = mpimg.imread(self.result["img_path"])
+        plt.figure(figsize=(9, 8))
+        plt.imshow(img)
+        plt.axis('off')
         plt.tight_layout()
         plt.show()

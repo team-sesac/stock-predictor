@@ -1,41 +1,35 @@
-import torch
 import pandas as pd
 from dataloader import LSTMDataLoader
 from model import LSTMNet
 from trainer import LSTMTrainer
 from scaler import Scaler
 from hyperparameter import HyperParameter
+from initializr import *
 from utils import *
 
-seed = 42
-torch.manual_seed(seed)
+set_torch_seed(seed=42)
 
-path = "data/"
-filename = "005930_2023.csv"
-data = pd.read_csv(path + filename)
+settings = load_setting(path="src/model/lstm/train_settings.json")
+init(settings)
+set_data, set_hyper = settings["data"], settings["hyper"]
+
+data = pd.read_csv(set_data["path"] + set_data["filename"])
 num_features = len(data.columns)
 
-# 데이터 파라미터
-train_size = 0.8
-train_batch_size = 20
-valid_batch_size = 100
-target = "Close"
-scale_type = "min_max"
-
 # 하이퍼 파라미터
-hyper_parameter = HyperParameter(seq_length = 14,
-                                    lr = 0.01,
-                                    epochs = 100,
-                                    num_layers = 1,
-                                    drop_out = 0)
+hyper_parameter = HyperParameter(seq_length=set_hyper["seq_length"],
+                                    lr=set_hyper["lr"],
+                                    epochs=set_hyper["epochs"],
+                                    num_layers=set_hyper["num_layers"],
+                                    drop_out=set_hyper["drop_out"])
 
 # 1. DataLodaer
-scaler = Scaler(scale_type=scale_type)
-dataloader = LSTMDataLoader(data=data, target=target, scaler=scaler)
+scaler = Scaler(scale_type=set_data["scale_type"])
+dataloader = LSTMDataLoader(data=data, target=set_data["target"], scaler=scaler)
 dataloaders, datasets = dataloader.make_dataset(
-    train_size=train_size,
-    train_batch_size=train_batch_size,
-    valid_batch_size=valid_batch_size,
+    train_size=set_hyper["train_size"],
+    train_batch_size=set_hyper["train_batch_size"],
+    valid_batch_size=set_hyper["valid_batch_size"],
     seq_length=hyper_parameter.get_seq_length()
 )
 
@@ -48,4 +42,7 @@ trainer = LSTMTrainer(model=model, scaler=scaler,
                         data_loaders=dataloaders, datasets=datasets, 
                         hyper_parameter=hyper_parameter)
 trainer.train()
+trainer.save_result(learn_topic=set_data["learn_topic"], 
+                    path=set_data["result_path"],
+                    description=set_data["description"])
 trainer.visualization()
