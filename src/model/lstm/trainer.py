@@ -148,8 +148,9 @@ class LSTMTrainer():
     def _save_files(self, learn_topic, path, description, predict: tuple[np.ndarray, np.ndarray]):
         
         time = get_current_time()
-        save_path = f"{path}{learn_topic}) {time}/"
+        save_path = f"{path}{learn_topic}) {time}"
         mkdir(save_path)
+        save_path += "/"
         
         description_path = save_path + "description.txt"
         text = f"<description>\n{description}"
