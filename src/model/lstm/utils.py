@@ -24,8 +24,9 @@ def get_current_time() -> str:
     return formatted_time
 
 def mkdir(dir):
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+    os_dir = os.path.join(dir)
+    if not os.path.exists(os_dir):
+        os.makedirs(os_dir)
         
 def write_text(path, text):
     with open(path, 'w') as file:
