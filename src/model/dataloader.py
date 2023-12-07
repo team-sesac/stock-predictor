@@ -3,13 +3,13 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 from scaler import Scaler
 
-class LSTMDataLoader():
+class RecurrentDataLoader():
     
     def __init__(self, data, target: str, scaler: Scaler):
         data['Y'] = data.loc[:, [target]]
         data = data.drop(labels=[target], axis=1)
         self.time_series = data
-        self.length_series = len(data)
+        self.length_series = len(self.time_series)
         self.target = target
         self.scaler = scaler
     

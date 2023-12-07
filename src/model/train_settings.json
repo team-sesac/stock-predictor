@@ -1,21 +1,24 @@
 {
     "data": {
         "path": "data/",
-        "filename": "005930_2023.csv",
+        "filename": "KOSPI.csv",
         "target": "Close",
         "scale_type": "min_max",
         "result_path": "data/result/",
-        "learn_topic": "test005930",
-        "description": "테스트!!!"
+        "learn_topic": "KOSPI-obv",
+        "description": "준범님이 주신 데이터!!!"
     },
+    "model": "LSTM",
+    "loss": "MSE",
     "hyper": {
         "train_size": 0.8,
         "train_batch_size": 20,
         "valid_batch_size": 100,
-        "seq_length": 14,
+        "seq_length": 7,
         "lr": 0.01,
         "epochs": 100,
         "num_layers": 1,
-        "drop_out": 0
+        "drop_out": 0,
+        "huber_beta": 1.0
     }
 }

@@ -1,7 +1,7 @@
 import pandas as pd
-from dataloader import LSTMDataLoader
-from model import LSTMNet
-from trainer import LSTMTrainer
+from dataloader import RecurrentDataLoader
+from model import RecurrentNN
+from trainer import Trainer
 from scaler import Scaler
 from hyperparameter import HyperParameter
 from initializr import *
@@ -9,7 +9,7 @@ from utils import *
 
 set_torch_seed(seed=42)
 
-settings = load_setting(path="src/model/lstm/train_settings.json")
+settings = load_setting(path="src/model/train_settings.json")
 init(settings)
 set_data, set_hyper = settings["data"], settings["hyper"]
 
@@ -25,7 +25,7 @@ hyper_parameter = HyperParameter(seq_length=set_hyper["seq_length"],
 
 # 1. DataLodaer
 scaler = Scaler(scale_type=set_data["scale_type"])
-dataloader = LSTMDataLoader(data=data, target=set_data["target"], scaler=scaler)
+dataloader = RecurrentDataLoader(data=data, target=set_data["target"], scaler=scaler)
 dataloaders, datasets = dataloader.make_dataset(
     train_size=set_hyper["train_size"],
     train_batch_size=set_hyper["train_batch_size"],
@@ -34,15 +34,15 @@ dataloaders, datasets = dataloader.make_dataset(
 )
 
 # 2. Model
-model = LSTMNet(input_size=num_features, hidden_size=num_features*2,
+model = RecurrentNN(model=settings["model"], input_size=num_features, hidden_size=num_features*2,
                         output_size=1, hyper_parameter=hyper_parameter)
 
 # 3. Trainer
-trainer = LSTMTrainer(model=model, scaler=scaler, 
+trainer = Trainer(model=model, scaler=scaler, 
                         data_loaders=dataloaders, datasets=datasets, 
-                        hyper_parameter=hyper_parameter)
+                        hyper_parameter=hyper_parameter, loss=settings["loss"], huber_beta=set_hyper["huber_beta"])
 trainer.train()
-trainer.save_result(learn_topic=set_data["learn_topic"], 
+trainer.save_result(model=settings["model"], loss=settings["loss"], learn_topic=set_data["learn_topic"], 
                     path=set_data["result_path"],
                     description=set_data["description"])
 trainer.visualization()

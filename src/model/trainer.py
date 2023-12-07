@@ -1,4 +1,3 @@
-from tkinter import image_names
 import torch
 import torch.nn as nn
 import numpy as np
@@ -11,13 +10,13 @@ from earlystop import EarlyStopping
 from hyperparameter import HyperParameter
 from utils import get_current_time, mkdir, write_text
 
-class LSTMTrainer():
+class Trainer():
     
-    def __init__(self, model, scaler: Scaler, data_loaders, datasets, hyper_parameter: HyperParameter):
+    def __init__(self, model, scaler: Scaler, data_loaders, datasets, hyper_parameter: HyperParameter, loss: str, huber_beta: float):
         train_data_loader, valid_data_loader = data_loaders
         train_data_sets, valid_data_sets = datasets
         self.model = model
-        self.loss_fn = nn.MSELoss().to(hyper_parameter.get_device())
+        self.loss_fn = self._get_loss_fn(loss=loss.upper(), huber_beta=huber_beta).to(hyper_parameter.get_device())
         self.optimizer = torch.optim.Adam(params=model.parameters(), lr=hyper_parameter.get_lr())
         self.epochs = hyper_parameter.get_epochs()
         self.train_epoch_losses = [] # epoch마다 loss 저장
@@ -31,6 +30,17 @@ class LSTMTrainer():
         self.scaler = scaler
         self.hyper_parameter = hyper_parameter
         self.result = {}
+        self.loss = loss.upper()
+        
+    def _get_loss_fn(self, loss, huber_beta):
+        if loss == "MSE":
+            return nn.MSELoss()
+        elif loss == "MAE":
+            return nn.L1Loss()
+        elif loss == "HUBER":
+            return nn.SmoothL1Loss(beta=huber_beta)
+        else:
+            raise ValueError("loss는 'MSE', 'MAE', 'HUBER' 만 지정 가능합니다.")
         
     def train(self, verbose=10, patience=10):
 
@@ -111,7 +121,7 @@ class LSTMTrainer():
         eval["R2(\u2191)"] = r2
         return eval
     
-    def save_result(self, learn_topic, path, description):
+    def save_result(self, model, loss, learn_topic, path, description):
         epochs = len(self.train_epoch_losses)
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(9, 8))
         # loss graph
@@ -143,17 +153,20 @@ class LSTMTrainer():
         
         plt.tight_layout()
         
-        self._save_files(learn_topic=learn_topic, path=path, description=description, predict=(test_y, pred))
+        self._save_files(model=model, loss=loss, 
+                            learn_topic=learn_topic, path=path, 
+                            description=description, predict=(test_y, pred),
+                            eval=eval)
         
-    def _save_files(self, learn_topic, path, description, predict: tuple[np.ndarray, np.ndarray]):
+    def _save_files(self, model, loss, learn_topic, path, description, predict: tuple[np.ndarray, np.ndarray], eval):
         
         time = get_current_time()
-        save_path = f"{path}{learn_topic}) {time}"
+        save_path = f"{path}{learn_topic}) {time} ({model}-{loss})"
         mkdir(save_path)
         save_path += "/"
         
-        description_path = save_path + "description.txt"
-        text = f"<description>\n{description}"
+        description_path = save_path + f"[{model}] description.txt"
+        text = f"<description> model: {model}\n{description}"
         write_text(path=description_path, text=text)
         
         # 1. 하이퍼 파라미터 저장
@@ -166,7 +179,7 @@ class LSTMTrainer():
             "train": [ round(loss, 4) for loss in self.train_epoch_losses],
             "valid": [ round(loss, 4) for loss in self.valid_epoch_losses]
         }
-        epoch_losses_path = save_path + "epoch_losses.csv"
+        epoch_losses_path = save_path + f"epoch_losses({loss}).csv"
         pd.DataFrame(data=epoch_loss_dict).to_csv(epoch_losses_path, index=False)
         
         # 3. 예측
@@ -178,7 +191,11 @@ class LSTMTrainer():
         predict_path = save_path + "predict.csv"
         pd.DataFrame(pred_dict).to_csv(predict_path, index=False)
         
-        # image
+        # 4. 평가
+        evaluation_path = save_path + "evaluations.csv"
+        pd.DataFrame(eval, index=[0]).to_csv(evaluation_path, index=False)
+        
+        # 5. image
         image_path = save_path + "visualization.png"
         plt.savefig(image_path)
         self.result["img_path"] = image_path
