@@ -5,16 +5,17 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from scaler import Scaler
 from earlystop import EarlyStopping
+from hyperparameter import HyperParameter
 
 class LSTMTrainer():
     
-    def __init__(self, model, scaler: Scaler, data_loaders, datasets, lr, num_epochs, device):
+    def __init__(self, model, scaler: Scaler, data_loaders, datasets, hyper_parameter: HyperParameter):
         train_data_loader, valid_data_loader = data_loaders
         train_data_sets, valid_data_sets = datasets
         self.model = model
-        self.loss_fn = nn.MSELoss().to(device)
-        self.optimizer = torch.optim.Adam(params=model.parameters(), lr=lr)
-        self.epochs = num_epochs
+        self.loss_fn = nn.MSELoss().to(hyper_parameter.get_device())
+        self.optimizer = torch.optim.Adam(params=model.parameters(), lr=hyper_parameter.get_lr())
+        self.epochs = hyper_parameter.get_epochs()
         self.train_epoch_losses = [] # epoch마다 loss 저장
         self.valid_epoch_losses = []
         self.mae_scores = []
@@ -22,7 +23,7 @@ class LSTMTrainer():
         self.valid_data_loader = valid_data_loader
         self.train_data_sets = train_data_sets
         self.valid_data_sets = valid_data_sets
-        self.device = device
+        self.device = hyper_parameter.get_device()
         self.scaler = scaler
         
     def train(self, verbose=10, patience=10):
@@ -37,13 +38,10 @@ class LSTMTrainer():
 
                 # seq별 hidden state reset
                 self.model.reset_hidden_state()
-                
                 # H(x) 계산
                 outputs = self.model(x_train)
-                    
                 # cost 계산
                 loss = self.loss_fn(outputs, y_train)                    
-                
                 # cost로 H(x) 개선
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -89,21 +87,29 @@ class LSTMTrainer():
         test_y_inverse = self.scaler.inverse_y(test_y)
         return pred_inverse, test_y_inverse
     
-    def performance_eval_metrics(self):
-        # mae
-        pred, test_y = self._inverse_transform()
-        mae = np.mean(np.abs(test_y-pred))
-        print(f"MAE Score : {mae}")
-        # mse
-        # rmse
-        # mape
-        # mpe
+    def _perform_eval_metrics(self, pred, y):
+        eval = {}
+        print(len(y))
+        mae = np.mean(np.abs(y-pred))
+        eval["MAE(\u2193)"] = mae
+        mape = np.mean(np.abs((y-pred) / y) * 100)
+        eval["MAPE(\u2193)"] = mape
+        mse = np.mean(np.square(y-pred))
+        eval["MSE(\u2193)"] = mse
+        rmse = np.sqrt(mse)
+        eval["RMSE(\u2193)"] = rmse
+        msle = np.mean(np.sum(np.square(np.log(y+1) - np.log(pred+1))))
+        eval["MSLE(\u2193)"] = msle
+        rmsle = np.sqrt(msle)
+        eval["RMSLE(\u2193)"] = rmsle
+        r2 =  1 - (np.sum(np.square(y-pred)) / np.sum(np.square(y - np.mean(y))))
+        eval["R2(\u2191)"] = r2
+        return eval
     
     def visualization(self):
-        # loss graph
-        # pred graph
         epochs = len(self.train_epoch_losses)
-        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8, 6))
+        fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(9, 8))
+        # loss graph
         axe_loss = axes[0]
         axe_loss.plot(range(epochs), self.train_epoch_losses, label="train", color="blue")
         axe_loss.plot(range(epochs), self.valid_epoch_losses, label="valid", color="orange")
@@ -111,6 +117,7 @@ class LSTMTrainer():
         axe_loss.legend()
         axe_loss.set_ylabel("MSE Loss")
         
+        # pred graph
         axe_pred = axes[1]
         pred, test_y = self._inverse_transform()
         axe_pred.plot(range(len(pred)), pred, label="pred", color="orange")
@@ -118,6 +125,16 @@ class LSTMTrainer():
         axe_pred.set_ylabel("Close")
         axe_pred.legend()
         
+        eval = self._perform_eval_metrics(pred=pred, y=test_y)
+        axe_eval = axes[2]
+        evals = eval.items()
+        x = 0.0
+        y = 0.9
+        for k, v in evals:
+            str: str = f"{'%-8s' % k} : {round(v, 2)}"
+            axe_eval.text(x, y, str, fontsize=12, ha='left', va='center', family='monospace')
+            y -= 0.12
+        axe_eval.axis("off")
+        
         plt.tight_layout()
-        plt.title(label="Predict Graph")
         plt.show()

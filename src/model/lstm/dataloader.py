@@ -8,7 +8,7 @@ class LSTMDataLoader():
     def __init__(self, data, target: str, scaler: Scaler):
         data['Y'] = data.loc[:, [target]]
         data = data.drop(labels=[target], axis=1)
-        self.time_series = data[::-1]
+        self.time_series = data
         self.length_series = len(data)
         self.target = target
         self.scaler = scaler
