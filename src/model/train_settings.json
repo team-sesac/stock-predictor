@@ -8,8 +8,8 @@
         "learn_topic": "KOSPI-obv",
         "description": "준범님이 주신 데이터!!!"
     },
-    "model": "LSTM",
-    "loss": "MSE",
+    "model": ["RNN", "LSTM", "GRU"],
+    "loss": ["MSE", "MAE", "Huber"],
     "hyper": {
         "train_size": 0.8,
         "train_batch_size": 20,

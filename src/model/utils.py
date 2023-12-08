@@ -2,6 +2,7 @@ import torch
 import json
 from datetime import datetime
 import os
+from collections.abc import Iterable
 
 def get_device():
     if torch.cuda.is_available():
@@ -31,3 +32,6 @@ def mkdir(dir):
 def write_text(path, text):
     with open(path, 'w') as file:
         file.write(text)
+
+def is_iter(obj):
+    return not isinstance(obj, str) and isinstance(obj, Iterable)
