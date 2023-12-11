@@ -1,0 +1,25 @@
+{
+    "data": {
+        "path": "data/",
+        "filename": "국민대_보조지표데이터.csv",
+        "target": "Close",
+        "scale_type": "min_max",
+        "result_path": "data/result/",
+        "learn_topic": "KOSPI-obv",
+        "description": "test"
+    },
+    "model": ["RNN", "LSTM"],
+    "loss": ["MSE"],
+    "hyper": {
+        "train_size": 0.8,
+        "train_batch_size": 20,
+        "valid_batch_size": 100,
+        "seq_length": 20,
+        "lr": 0.01,
+        "epochs": 100,
+        "hidden_size": 20,
+        "num_layers": 1,
+        "drop_out": 0,
+        "huber_beta": 1.0
+    }
+}
