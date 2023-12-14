@@ -7,6 +7,7 @@ from hyperparameter import HyperParameter
 from initializr import *
 from utils import *
 import numpy as np
+from processor.preprocessor import DefaultPreprocessor
 
 set_torch_seed(seed=42)
 
@@ -17,7 +18,8 @@ models, losses = settings["model"], settings["loss"]
 models, losses = models if is_iter(models) else [models], losses if is_iter(losses) else [losses]
 
 data_origin = pd.read_csv(set_data["path"] + set_data["filename"])
-data_origin_ = data_origin
+preprocessor = DefaultPreprocessor()
+data_origin_ = preprocessor.execute(data_origin)
 data_origin_ = data_origin_.ffill().fillna(0)
 data_origin_ = data_origin_.drop(labels=set_data["remove_features"], axis=1)
 
