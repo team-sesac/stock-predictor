@@ -4,7 +4,7 @@ from hyperparameter import HyperParameter
 
 class FeedForwardNN(nn.Module):
     
-    def __init__(self, num_continuous_features: int, num_categorical_features: list[int], hyper_parameter: HyperParameter):
+    def __init__(self, num_continuous_features: int, num_categorical_features, hyper_parameter: HyperParameter):
         super(FeedForwardNN, self).__init__()
         
         self.embedding_dims = hyper_parameter.get_embedding_dims()
@@ -76,21 +76,3 @@ class FeedForwardNN(nn.Module):
 
         return out
     
-if __name__ == "__main__":
-    
-    a = nn.ModuleList([
-        nn.Embedding(num_categories, embedding_dim) for num_categories, embedding_dim in zip([2], [20])
-    ])
-    t = torch.IntTensor([[0]])
-    r = a[0](t)
-    print(r)
-    
-    # data = torch.Tensor([[0.123, 0.321, 0.2, 0], [0.643, 0.6, 0.4, 1]])
-    # hyper_parameter = HyperParameter(lr=0.1,
-    #                                 epochs=100,
-    #                                 hidden_units=[2, 2],
-    #                                 embedding_dims=[3],
-    #                                 drop_outs=[0.1, 0.2, 0.3])
-    # model = FeedForwardNN(num_continuous_features=3, num_categorical_features=[2], hyper_parameter=hyper_parameter)
-    # result = model(data[:, :-1], data[:, [-1]])
-    # print(result)

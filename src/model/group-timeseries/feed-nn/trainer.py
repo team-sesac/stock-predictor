@@ -76,9 +76,6 @@ class Trainer():
                     valid_avg_cost += loss.item()
                 self.valid_epoch_losses.append(valid_avg_cost / valid_total_batch)
             
-            # if epoch % verbose == 0:
-            #     print('Epoch:', '%03d' % (epoch), ' / train loss :', '{:.4f}'.format(train_avg_cost), ' / valid loss :', '{:.10f}'.format(valid_avg_cost))
-            
             # early stop 
             if ealry_stop(valid_avg_cost):
                 break
@@ -176,7 +173,7 @@ class Trainer():
                             description=description, predict=(test_y, pred),
                             eval=eval, test_set=test_set)
         
-    def _save_files(self, model, loss, learn_topic, path, description, predict: tuple[np.ndarray, np.ndarray], eval, test_set):
+    def _save_files(self, model, loss, learn_topic, path, description, predict, eval, test_set):
         
         time = get_current_time()
         save_path = f"{path}{learn_topic}) {time} ({model}-{loss})"
