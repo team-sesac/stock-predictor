@@ -55,6 +55,9 @@ class RecurrentNN(nn.Module):
             self.hidden = torch.zeros(self.layers, self.seq_length, self.hidden_size)
         
     def forward(self, x):
+        
+        
+        
         x, _status = self.net(x)
         x = self.fc(x[:, -1])
         return x

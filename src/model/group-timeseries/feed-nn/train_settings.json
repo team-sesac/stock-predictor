@@ -1,0 +1,28 @@
+{
+    "data": {
+        "path": "data/temp/",
+        "filename": "kaggle_train.csv",
+        "test_filename": "kaggle_test.csv",
+        "target": "target",
+        "categorical_features": ["stock_id"],
+        "remove_features": ["row_id"],
+        "scale_type": "min_max",
+        "result_path": "data/result/",
+        "learn_topic": "FFNN 테스트",
+        "description": "test"
+    },
+    "model": ["FNN"],
+    "loss": ["MAE"],
+    "hyper": {
+        "train_size": 0.8,
+        "train_batch_size": 1000,
+        "valid_batch_size": 1000,
+        "lr": 0.01,
+        "epochs": 100,
+        "hidden_units": [3, 3],
+        "drop_outs": [0.1, 0.2, 0.3],
+        "huber_beta": 1.0,
+        "embedding_dims": [20],
+        "rnn_bias": true
+    }
+}
