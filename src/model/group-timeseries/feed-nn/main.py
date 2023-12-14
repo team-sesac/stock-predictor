@@ -6,8 +6,7 @@ from scaler import Scaler
 from hyperparameter import HyperParameter
 from initializr import *
 from utils import *
-import numpy as np
-from processor.preprocessor import DefaultPreprocessor
+from processor.default_processor import DefaultPreprocessor
 
 set_torch_seed(seed=42)
 
