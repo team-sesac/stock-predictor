@@ -18,11 +18,11 @@ models, losses = models if is_iter(models) else [models], losses if is_iter(loss
 
 data_origin = pd.read_csv(set_data["path"] + set_data["filename"])
 preprocessor = DefaultPreprocessor()
-data_origin_ = preprocessor.execute(data_origin[:100000])
+data_origin_ = preprocessor.execute(data_origin)
 data_origin_ = data_origin_.ffill().fillna(0)
 data_origin_ = data_origin_.drop(labels=set_data["remove_features"], axis=1)
 
-date_flag = 9
+date_flag = 478
 data = data_origin_[data_origin_["date_id"] < date_flag]
 
 # 하이퍼 파라미터
