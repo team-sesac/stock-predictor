@@ -6,7 +6,7 @@ from scaler import Scaler
 from hyperparameter import HyperParameter
 from initializr import *
 from utils import *
-import numpy as np
+from processor.default_processor import DefaultPreprocessor
 
 set_torch_seed(seed=42)
 
@@ -17,10 +17,13 @@ models, losses = settings["model"], settings["loss"]
 models, losses = models if is_iter(models) else [models], losses if is_iter(losses) else [losses]
 
 data_origin = pd.read_csv(set_data["path"] + set_data["filename"])
-data_origin = data_origin.drop(labels=set_data["remove_features"], axis=1)
-print(data_origin.columns)
-data = data_origin[data_origin["date_id"] < 478]
-data = data.fillna(method="ffill").fillna(0)
+preprocessor = DefaultPreprocessor()
+data_origin_ = preprocessor.execute(data_origin)
+data_origin_ = data_origin_.ffill().fillna(0)
+data_origin_ = data_origin_.drop(labels=set_data["remove_features"], axis=1)
+
+date_flag = 478
+data = data_origin_[data_origin_["date_id"] < date_flag]
 
 # 하이퍼 파라미터
 hyper_parameter = HyperParameter(lr=set_hyper["lr"],
@@ -30,11 +33,9 @@ hyper_parameter = HyperParameter(lr=set_hyper["lr"],
                                     drop_outs=set_hyper["drop_outs"])
 
 num_features = len(data.columns) - 1
-num_categorical_features = [ len(data[col].unique()) for col in set_data["categorical_features"] ]
-num_continuous_features = num_features - len(num_categorical_features)
 
-print(f"num_categorical_features = {num_categorical_features}")
-print(f"num_continuous_features = {num_continuous_features}")
+num_categorical_features = [ len(data_origin[col].unique()) for col in set_data["categorical_features"] ]
+num_continuous_features = num_features - len(num_categorical_features)
 
 # 1. DataLodaer
 scaler = Scaler(scale_type=set_data["scale_type"])
@@ -45,11 +46,12 @@ dataloaders, datasets = dataloader.make_dataset(
     valid_batch_size=set_hyper["valid_batch_size"]
 )
 
-test_data = data_origin[data_origin["date_id"] >= 478]
+test_data = data_origin_[data_origin_["date_id"] >= date_flag]
 test_data['Y'] = test_data.loc[:, [set_data["target"]]]
 test_data = test_data.drop(labels=[set_data["target"]], axis=1)
-test_data.iloc[:, :-1] = scaler.transform_x(test_data.iloc[:, :-1])
+test_data.iloc[:, 1:-1] = scaler.transform_x(test_data.iloc[:, 1:-1])
 test_data.iloc[:, [-1]] = scaler.transform_y(test_data.iloc[:, [-1]])
+test_data = test_data.reset_index(drop=True)
 
 def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyper_parameter):
     
@@ -71,3 +73,5 @@ for model in models:
         learn(model_type=model, loss_type=loss,
                 dataloaders=dataloaders, datasets=datasets, set_data=set_data, 
                 set_hyper=set_hyper, hyper_parameter=hyper_parameter)
+        
+

@@ -17,9 +17,9 @@ class FeedForwardDataLoader():
     
     def make_dataset(self, train_size: float, train_batch_size: int, valid_batch_size: int):
 
-        self.scaler.fit_x(self.data.iloc[:, :-1])
+        self.scaler.fit_x(self.data.iloc[:, 1:-1])
         self.scaler.fit_y(self.data.iloc[:, [-1]])
-        self.data.iloc[:, :-1] = self.scaler.transform_x(self.data.iloc[:, :-1])
+        self.data.iloc[:, 1:-1] = self.scaler.transform_x(self.data.iloc[:, 1:-1])
         self.data.iloc[:, [-1]] = self.scaler.transform_y(self.data.iloc[:, [-1]])
 
         grouped_data = self.data.groupby("stock_id")

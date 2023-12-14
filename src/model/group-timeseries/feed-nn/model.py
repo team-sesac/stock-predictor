@@ -44,27 +44,28 @@ class FeedForwardNN(nn.Module):
         ])
 
     def forward(self, continuous, categorical):
-        
+        # print(f"categorical[:, 0] = {categorical[:, 0]}")
         # Embedding categorical features
         embeddings = [ embedding(categorical[:, i].to(torch.int)) for i, embedding in enumerate(self.embeddings) ]
         flattened_embeddings = [ embedding.view(embedding.size(0), -1) for embedding in embeddings ]
-        
+
         # Concatenate continuous and flattened categorical features
         concatenated = torch.cat([continuous] + flattened_embeddings, dim=1)
-        
+
         # Apply linear transformation for continuous features
-        x = self.linear_continuous_act(self.linear_continuous(continuous))
-        
+        x = self.linear_continuous(continuous)
+        x = self.linear_continuous_act(x)
+
         # Apply linear transformation for concatenated features
         x = self.linear_concatenated_act(self.linear_concatenated(concatenated))
-        
+
         # Apply batch normalization and dropout
         x = self.batch_norm_layers[0](x)
-        
+
         # xx = self.dropout_layers[0](x)
         # x = F.dropout(x, p=self.dropout_layers[0], training=True)
         x = self.dropout_layers[0](x)
-        
+
         # Apply hidden layers with batch normalization, ReLU, and dropout
         for layer, batch_norm, dropout, act in zip(self.hidden_layers, self.batch_norm_layers[1:], self.dropout_layers[1:], self.hidden_layer_acts):
             x = act(batch_norm(layer(x)))

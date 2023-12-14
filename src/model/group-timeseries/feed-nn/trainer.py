@@ -85,16 +85,16 @@ class Trainer():
     def _test_evaluate(self, test_set):
         
         pred = []
-        X, y = test_set
+        X, y = torch.tensor(test_set.iloc[:, :-1].values).float(), torch.tensor(test_set.iloc[:, [-1]].values).float()
         with torch.no_grad():
-            for i in range(len(X)):
+            print(f"Evaluation Test Dataset")
+            for i in tqdm(range(len(X)), desc="진행중"):
                 X_ = torch.unsqueeze(X[i], 0)
                 predicated = self.model(X_[:, 1:], X_[:, [0]])
                 predicated = torch.flatten(predicated).item()
                 pred.append(predicated)
-                
-        eval = self._perform_eval_metrics(pred, y)
-        return eval
+        print(f"complete _test_evaluate ({len(pred)})")
+        return self.scaler.inverse_y(np.array(pred).reshape(-1, 1)), self.scaler.inverse_y(y)
         
     
     def _inverse_transform(self):
@@ -102,7 +102,8 @@ class Trainer():
         pred = []
         with torch.no_grad():
             test_x, test_y = self.valid_data_sets.tensors
-            for i in range(len(test_x)):
+            print(f"Evaluation Validation Dataset")
+            for i in tqdm(range(len(test_x)), desc="진행중"):
                 test_x_ = torch.unsqueeze(test_x[i], 0)
                 predicated = self.model(test_x_[:, 1:], test_x_[:, [0]])
                 predicated = torch.flatten(predicated).item()
@@ -113,6 +114,7 @@ class Trainer():
         return pred_inverse, test_y_inverse
     
     def _perform_eval_metrics(self, pred, y):
+        pred, y = np.array(pred), np.array(y)
         eval = {}
         mae = np.mean(np.abs(y-pred))
         eval["MAE(\u2193)"] = mae
@@ -146,7 +148,7 @@ class Trainer():
         pred, test_y = self._inverse_transform()
         step_pred, step_test_y = [], []
 
-        for idx in range(0, pred, 1000):
+        for idx in range(0, len(pred), 100):
             step_pred.append(pred[idx])
             step_test_y.append(test_y[idx])
             
@@ -161,7 +163,7 @@ class Trainer():
         x = 0.0
         y = 0.9
         for k, v in evals:
-            str: str = f"{'%-8s' % k} : {round(v, 2)}"
+            str: str = f"{'%-8s' % k} : {torch.round(torch.tensor(v), decimals=2)}"
             axe_eval.text(x, y, str, fontsize=12, ha='left', va='center', family='monospace')
             y -= 0.12
         axe_eval.axis("off")
@@ -170,7 +172,7 @@ class Trainer():
         
         self._save_files(model=model_type, loss=loss_type, 
                             learn_topic=learn_topic, path=path, 
-                            description=description, predict=(test_y, pred),
+                            description=description, predict=(pred, test_y),
                             eval=eval, test_set=test_set)
         
     def _save_files(self, model, loss, learn_topic, path, description, predict, eval, test_set):
@@ -201,27 +203,36 @@ class Trainer():
         
         # 2. 손실함수
         epoch_loss_dict = {
-            "train": [ round(loss, 4) for loss in self.train_epoch_losses],
-            "valid": [ round(loss, 4) for loss in self.valid_epoch_losses]
+            "train": [ torch.round(torch.tensor(loss), decimals=4).item() for loss in self.train_epoch_losses],
+            "valid": [ torch.round(torch.tensor(loss), decimals=4).item() for loss in self.valid_epoch_losses]
         }
         epoch_losses_path = save_path + f"epoch_losses({loss}).csv"
         pd.DataFrame(data=epoch_loss_dict).to_csv(epoch_losses_path, index=False)
         
         # 3. 예측
-        true, pred = predict
-        pred_dict = {
-            "true": np.round(true, decimals=3).flatten(),
-            "pred": np.round(pred, decimals=3).flatten()
+        valid_pred, valid_y = predict
+        valid_pred_dict = {
+            "true": torch.round(torch.tensor(valid_y), decimals=3).flatten(),
+            "pred": torch.round(torch.tensor(valid_pred), decimals=3).flatten()
         }
-        predict_path = save_path + "predict.csv"
-        pd.DataFrame(pred_dict).to_csv(predict_path, index=False)
+        valid_predict_path = save_path + "valid_predict.csv"
+        pd.DataFrame(valid_pred_dict).to_csv(valid_predict_path, index=False)
         
         # 4. 검증 데이터 평가
-        evaluation_path = save_path + "evaluations.csv"
-        pd.DataFrame(eval, index=[0]).to_csv(evaluation_path, index=False)
+        valid_evaluation_path = save_path + "valid_evaluations.csv"
+        pd.DataFrame(eval, index=[0]).to_csv(valid_evaluation_path, index=False)
         
         # 5. 테스트 데이터 평가
-        test_eval = self._test_evaluate(test_set=test_set)
+        test_pred, test_y = self._test_evaluate(test_set=test_set)
+        test_pred_dict = {
+            "true": torch.round(torch.tensor(test_y), decimals=3).flatten(),
+            "pred": torch.round(torch.tensor(test_pred), decimals=3).flatten()
+        }
+        # true, pred
+        test_predict_path = save_path + "test_predict.csv"
+        pd.DataFrame(test_pred_dict).to_csv(test_predict_path, index=False)
+        # evaluation
+        test_eval = self._perform_eval_metrics(test_pred, test_y)
         test_evaluation_path = save_path + "test_evaluations.csv"
         pd.DataFrame(test_eval, index=[0]).to_csv(test_evaluation_path, index=False)
         
