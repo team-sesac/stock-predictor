@@ -97,8 +97,7 @@ class Trainer():
                 predicated = torch.flatten(predicated).item()
                 pred.append(predicated)
         print(f"complete _test_evaluate ({len(pred)})")
-        eval = self._perform_eval_metrics(pred, y)
-        return eval
+        return self.scaler.inverse_y(np.array(pred).reshape(-1, 1)), self.scaler.inverse_y(y)
         
     
     def _inverse_transform(self):
@@ -176,7 +175,7 @@ class Trainer():
         
         self._save_files(model=model_type, loss=loss_type, 
                             learn_topic=learn_topic, path=path, 
-                            description=description, predict=(test_y, pred),
+                            description=description, predict=(pred, test_y),
                             eval=eval, test_set=test_set)
         
     def _save_files(self, model, loss, learn_topic, path, description, predict: tuple[np.ndarray, np.ndarray], eval, test_set):
@@ -214,20 +213,29 @@ class Trainer():
         pd.DataFrame(data=epoch_loss_dict).to_csv(epoch_losses_path, index=False)
         
         # 3. 예측
-        true, pred = predict
-        pred_dict = {
-            "true": torch.round(torch.tensor(true), decimals=3).flatten(),
-            "pred": torch.round(torch.tensor(pred), decimals=3).flatten()
+        valid_pred, valid_y = predict
+        valid_pred_dict = {
+            "true": torch.round(torch.tensor(valid_y), decimals=3).flatten(),
+            "pred": torch.round(torch.tensor(valid_pred), decimals=3).flatten()
         }
-        predict_path = save_path + "predict.csv"
-        pd.DataFrame(pred_dict).to_csv(predict_path, index=False)
+        valid_predict_path = save_path + "valid_predict.csv"
+        pd.DataFrame(valid_pred_dict).to_csv(valid_predict_path, index=False)
         
         # 4. 검증 데이터 평가
-        evaluation_path = save_path + "evaluations.csv"
-        pd.DataFrame(eval, index=[0]).to_csv(evaluation_path, index=False)
+        valid_evaluation_path = save_path + "valid_evaluations.csv"
+        pd.DataFrame(eval, index=[0]).to_csv(valid_evaluation_path, index=False)
         
         # 5. 테스트 데이터 평가
-        test_eval = self._test_evaluate(test_set=test_set)
+        test_pred, test_y = self._test_evaluate(test_set=test_set)
+        test_pred_dict = {
+            "true": torch.round(torch.tensor(test_y), decimals=3).flatten(),
+            "pred": torch.round(torch.tensor(test_pred), decimals=3).flatten()
+        }
+        # true, pred
+        test_predict_path = save_path + "test_predict.csv"
+        pd.DataFrame(test_pred_dict).to_csv(test_predict_path, index=False)
+        # evaluation
+        test_eval = self._perform_eval_metrics(test_pred, test_y)
         test_evaluation_path = save_path + "test_evaluations.csv"
         pd.DataFrame(test_eval, index=[0]).to_csv(test_evaluation_path, index=False)
         
