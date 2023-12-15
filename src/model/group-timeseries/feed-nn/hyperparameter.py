@@ -15,6 +15,9 @@ class HyperParameter():
         self.embedding_dims = embedding_dims
         self._drop_outs = drop_outs
         self._device = get_device()
+        print(f"device - {self._device}")
+        print(f"count - {torch.cuda.device_count()}")
+        print(f"name - {torch.cuda.get_device_name(0)}")
         
     def get_lr(self):
         return self._lr

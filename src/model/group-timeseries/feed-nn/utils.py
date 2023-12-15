@@ -6,11 +6,11 @@ from collections.abc import Iterable
 
 def get_device():
     if torch.cuda.is_available():
-        return "cuda"
+        return torch.device("cuda")
     elif torch.backends.mps.is_available():
-        return "mps"
+        return torch.device("mps")
     else:
-        return "cpu"
+        return torch.device("cpu")
     
 def load_setting(path):
     with open(path, 'r', encoding='utf-8') as file:

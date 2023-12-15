@@ -7,8 +7,7 @@ import pandas as pd
 class FeedForwardDataLoader():
     
     def __init__(self, data, target: str, scaler: Scaler):
-        # 그룹핑 후 일정 비율로 나눈 후 각각 합치기
-        # Trainer에 최종 비교 함수도 구현(kaggle_test.csv 예측 비교 후 MAE 평가)
+
         data['Y'] = data.loc[:, [target]]
         data = data.drop(labels=[target], axis=1)
         self.data = data
@@ -37,10 +36,10 @@ class FeedForwardDataLoader():
         
         train_x, train_y = pd.concat(train_x_array, axis=0, ignore_index=True), pd.concat(train_y_array, axis=0, ignore_index=True)
         test_x, test_y = pd.concat(test_x_array, axis=0, ignore_index=True), pd.concat(test_y_array, axis=0, ignore_index=True)
-        
+
         train_dataset = TensorDataset(torch.FloatTensor(np.array(train_x)), torch.FloatTensor(np.array(train_y)))
         valid_dataset = TensorDataset(torch.FloatTensor(np.array(test_x)), torch.FloatTensor(np.array(test_y)))
         
         train_data_loader = DataLoader(dataset=train_dataset, batch_size=train_batch_size, shuffle=False)
-        valid_data_loader = DataLoader(dataset=valid_dataset, batch_size=valid_batch_size, shuffle=False) # drop_last=True
+        valid_data_loader = DataLoader(dataset=valid_dataset, batch_size=valid_batch_size, shuffle=False)
         return (train_data_loader, valid_data_loader), (train_dataset, valid_dataset)

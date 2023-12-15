@@ -15,8 +15,9 @@ class Trainer():
     def __init__(self, model, scaler: Scaler, data_loaders, datasets, hyper_parameter: HyperParameter, loss: str, huber_beta: float):
         train_data_loader, valid_data_loader = data_loaders
         train_data_sets, valid_data_sets = datasets
-        self.model = model
-        self.loss_fn = self._get_loss_fn(loss=loss.upper(), huber_beta=huber_beta).to(hyper_parameter.get_device())
+        self.device = hyper_parameter.get_device()
+        self.model = model.to(self.device)
+        self.loss_fn = self._get_loss_fn(loss=loss.upper(), huber_beta=huber_beta).to(self.device)
         self.optimizer = torch.optim.Adam(params=model.parameters(), lr=hyper_parameter.get_lr())
         self.epochs = hyper_parameter.get_epochs()
         self.train_epoch_losses = [] # epoch마다 loss 저장
@@ -26,7 +27,6 @@ class Trainer():
         self.valid_data_loader = valid_data_loader
         self.train_data_sets = train_data_sets
         self.valid_data_sets = valid_data_sets
-        self.device = hyper_parameter.get_device()
         self.scaler = scaler
         self.hyper_parameter = hyper_parameter
         self.result = {}
@@ -51,6 +51,8 @@ class Trainer():
             train_total_batch = len(self.train_data_loader)
             
             for x_train, y_train in self.train_data_loader:
+
+                x_train, y_train = x_train.to(self.device), y_train.to(self.device)
                 
                 # H(x) 계산
                 outputs = self.model(x_train[:, 1:], x_train[:, [0]])
@@ -71,13 +73,11 @@ class Trainer():
             valid_total_batch = len(self.valid_data_loader)
             with torch.no_grad():
                 for x_valid, y_valid in self.valid_data_loader:
+                    x_valid, y_valid = x_valid.to(self.device), y_valid.to(self.device)
                     outputs = self.model(x_valid[:, 1:], x_valid[:, [0]])
                     loss = self.loss_fn(outputs, y_valid)               
                     valid_avg_cost += loss.item()
                 self.valid_epoch_losses.append(valid_avg_cost / valid_total_batch)
-            
-            # if epoch % verbose == 0:
-            #     print('Epoch:', '%03d' % (epoch), ' / train loss :', '{:.4f}'.format(train_avg_cost), ' / valid loss :', '{:.10f}'.format(valid_avg_cost))
             
             # early stop 
             if ealry_stop(valid_avg_cost):
@@ -92,7 +92,7 @@ class Trainer():
         with torch.no_grad():
             print(f"Evaluation Test Dataset")
             for i in tqdm(range(len(X)), desc="진행중"):
-                X_ = torch.unsqueeze(X[i], 0)
+                X_ = torch.unsqueeze(X[i], 0).to(self.device)
                 predicated = self.model(X_[:, 1:], X_[:, [0]])
                 predicated = torch.flatten(predicated).item()
                 pred.append(predicated)
@@ -107,7 +107,7 @@ class Trainer():
             test_x, test_y = self.valid_data_sets.tensors
             print(f"Evaluation Validation Dataset")
             for i in tqdm(range(len(test_x)), desc="진행중"):
-                test_x_ = torch.unsqueeze(test_x[i], 0)
+                test_x_ = torch.unsqueeze(test_x[i], 0).to(self.device)
                 predicated = self.model(test_x_[:, 1:], test_x_[:, [0]])
                 predicated = torch.flatten(predicated).item()
                 pred.append(predicated)
@@ -179,6 +179,7 @@ class Trainer():
                             eval=eval, test_set=test_set, feature_names=feature_names)
         
     def _save_files(self, model, loss, learn_topic, path, description, predict, eval, test_set, feature_names):
+
         
         time = get_current_time()
         save_path = f"{path}{learn_topic}) {time} ({model}-{loss})"
