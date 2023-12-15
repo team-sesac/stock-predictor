@@ -12,11 +12,8 @@ class EarlyStopping:
         else:
             if value <= self.best_score:
                 self.n_triggered = 0
-                # print(f"n_triggered = {self.n_triggered}")
             else:
-                # print(f'[Early Stopping - Update]\n')
                 self.n_triggered += 1
-                # print(f'[Early Stopping - Patient] {self.n_triggered}/{self.patience}\n')
                 if self.n_triggered >= self.patience:
                     self.EARLY_STOP = True
             self.best_score = value

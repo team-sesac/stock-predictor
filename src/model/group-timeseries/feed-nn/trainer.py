@@ -135,7 +135,7 @@ class Trainer():
         eval["R2(\u2191)"] = r2
         return eval
     
-    def save_result(self, model_type, loss_type, learn_topic, path, description, test_set):
+    def save_result(self, model_type, loss_type, learn_topic, path, description, test_set, feature_names):
         epochs = len(self.train_epoch_losses)
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(9, 8))
         # loss graph
@@ -176,9 +176,9 @@ class Trainer():
         self._save_files(model=model_type, loss=loss_type, 
                             learn_topic=learn_topic, path=path, 
                             description=description, predict=(pred, test_y),
-                            eval=eval, test_set=test_set)
+                            eval=eval, test_set=test_set, feature_names=feature_names)
         
-    def _save_files(self, model, loss, learn_topic, path, description, predict: tuple[np.ndarray, np.ndarray], eval, test_set):
+    def _save_files(self, model, loss, learn_topic, path, description, predict, eval, test_set, feature_names):
         
         time = get_current_time()
         save_path = f"{path}{learn_topic}) {time} ({model}-{loss})"
@@ -194,7 +194,7 @@ class Trainer():
         }, model_path)
                 
         description_path = save_path + f"[{model}] description.txt"
-        text = f"<description> model: {model}\n{description}"
+        text = f"<description> model: {model}\n{description}\nfeature_names : {str(feature_names)}"
         write_text(path=description_path, text=text)
         
         # 1. 하이퍼 파라미터 저장

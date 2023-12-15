@@ -7,6 +7,7 @@ from hyperparameter import HyperParameter
 from initializr import *
 from utils import *
 from processor.default_processor import DefaultPreprocessor
+from processor.explained_optiver_processor import ExplainedOptiverProcessor
 
 set_torch_seed(seed=42)
 
@@ -17,10 +18,9 @@ models, losses = settings["model"], settings["loss"]
 models, losses = models if is_iter(models) else [models], losses if is_iter(losses) else [losses]
 
 data_origin = pd.read_csv(set_data["path"] + set_data["filename"])
-preprocessor = DefaultPreprocessor()
+preprocessor = ExplainedOptiverProcessor()
 data_origin_ = preprocessor.execute(data_origin)
-data_origin_ = data_origin_.ffill().fillna(0)
-data_origin_ = data_origin_.drop(labels=set_data["remove_features"], axis=1)
+feature_names = data_origin_.columns.values
 
 date_flag = 478
 data = data_origin_[data_origin_["date_id"] < date_flag]
@@ -65,7 +65,7 @@ def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyp
     trainer.train()
     trainer.save_result(model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
                         path=set_data["result_path"],
-                        description=set_data["description"], test_set=test_data)
+                        description=set_data["description"], test_set=test_data, feature_names=feature_names)
     #trainer.visualization()
     
 for model in models:
