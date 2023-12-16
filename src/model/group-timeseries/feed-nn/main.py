@@ -18,7 +18,7 @@ models, losses = settings["model"], settings["loss"]
 models, losses = models if is_iter(models) else [models], losses if is_iter(losses) else [losses]
 
 data_origin = pd.read_csv(set_data["path"] + set_data["filename"])
-preprocessor = ExplainedOptiverProcessor()
+preprocessor = DefaultPreprocessor()
 data_origin_ = preprocessor.execute(data_origin)
 data_origin_ = reduce_mem_usage(data_origin_)
 feature_names = data_origin_.columns.values

@@ -17,18 +17,19 @@ class FeedForwardNN(nn.Module):
         ])
 
         # Linear layer for continuous features
-        self.linear_continuous = nn.Linear(num_continuous_features, self.hidden_units[0])
-        self.linear_continuous_act = nn.ReLU()
+        # self.linear_continuous = nn.Linear(num_continuous_features, self.hidden_units[0])
+        # self.linear_continuous_act = nn.ReLU()
         
         # Linear layer after concatenating continuous and flattened categorical features
-        self.linear_concatenated = nn.Linear(num_continuous_features + sum(self.embedding_dims), self.hidden_units[1])
+        self.linear_concatenated = nn.Linear(num_continuous_features + sum(self.embedding_dims), self.hidden_units[0])
         self.linear_concatenated_act = nn.ReLU()
         
         # Additional hidden layers
         self.hidden_layers = nn.ModuleList([
-            nn.Linear(self.hidden_units[i], self.hidden_units[i+1]) for i in range(1, len(self.hidden_units)-1)
+            nn.Linear(self.hidden_units[i-1], self.hidden_units[i]) for i in range(1, len(self.hidden_units))
         ])
-        self.hidden_layer_acts = nn.ModuleList([ nn.ReLU() for _ in range(1, len(self.hidden_units)-1) ])
+        
+        self.hidden_layer_acts = nn.ModuleList([ nn.ReLU() for _ in range( len(self.hidden_units)-1) ])
 
         # Output layer
         self.output_layer = nn.Linear(self.hidden_units[-1], 1)
@@ -53,8 +54,8 @@ class FeedForwardNN(nn.Module):
         concatenated = torch.cat([continuous] + flattened_embeddings, dim=1)
 
         # Apply linear transformation for continuous features
-        x = self.linear_continuous(continuous)
-        x = self.linear_continuous_act(x)
+        # x = self.linear_continuous(continuous)
+        # x = self.linear_continuous_act(x)
 
         # Apply linear transformation for concatenated features
         x = self.linear_concatenated_act(self.linear_concatenated(concatenated))

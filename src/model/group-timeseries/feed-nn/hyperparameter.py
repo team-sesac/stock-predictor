@@ -17,7 +17,8 @@ class HyperParameter():
         self._device = get_device()
         print(f"device - {self._device}")
         print(f"count - {torch.cuda.device_count()}")
-        print(f"name - {torch.cuda.get_device_name(0)}")
+        if torch.cuda.device_count() > 0:
+            print(f"name - {torch.cuda.get_device_name(0)}")
         
     def get_lr(self):
         return self._lr

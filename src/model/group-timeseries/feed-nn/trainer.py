@@ -121,8 +121,8 @@ class Trainer():
         eval = {}
         mae = np.mean(np.abs(y-pred))
         eval["MAE(\u2193)"] = mae
-        mape = np.mean(np.abs((y-pred) / y) * 100)
-        eval["MAPE(\u2193)"] = mape
+        # mape = np.mean(np.abs((y-pred) / y) * 100)
+        # eval["MAPE(\u2193)"] = mape
         mse = np.mean(np.square(y-pred))
         eval["MSE(\u2193)"] = mse
         rmse = np.sqrt(mse)
