@@ -8,13 +8,17 @@ import numpy as np
 
 class ExplainedOptiverProcessor(Preprocessor):
     
-    def execute(self, df):
+    def execute_x(self, df):
         df = df.dropna(subset=["target"])
         df.reset_index(drop=True, inplace=True)
         self._set_data(df)
         df.ffill().fillna(0, inplace=True)
         df = self._generate_all_features(df)
         return df
+    
+    def execute_y(self, df, target):
+        df = df.dropna(subset=[target])
+        return df.ffill().fillna(0)
     
     def _set_data(self, df):
         self.global_stock_id_feats = {
@@ -47,13 +51,13 @@ class ExplainedOptiverProcessor(Preprocessor):
         self.weights = {int(k):v for k,v in enumerate(self.weights)}
     
     def _generate_all_features(self, df):
-        cols = [ c for c in df.columns if c not in ["row_id", "time_id"] ] # , "target"
+        cols = [ c for c in df.columns if c not in ["row_id", "time_id", "target"] ]
         df = df[cols]
         df = self._imbalance_features(df)
         gc.collect()
         df = self._other_features(df)
         gc.collect()
-        feature_name = [ i for i in df.columns if i not in ["row_id", "time_id"] ] # , "date_id", "target"
+        feature_name = [ i for i in df.columns if i not in ["row_id", "time_id", "date_id", "target"] ]
         return df[feature_name]
         
     

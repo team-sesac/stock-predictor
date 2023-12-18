@@ -4,6 +4,7 @@ from datetime import datetime
 import os
 from collections.abc import Iterable
 import numpy as np
+import pandas as pd
 
 def get_device():
     if torch.cuda.is_available():
@@ -38,6 +39,8 @@ def is_iter(obj):
     return not isinstance(obj, str) and isinstance(obj, Iterable)
 
 def reduce_mem_usage(df, verbose=0):
+    if isinstance(df, pd.Series):
+        df = df.to_frame()
     start_mem = df.memory_usage().sum() / 1024**2
     for col in df.columns:
         col_type = df[col].dtype
