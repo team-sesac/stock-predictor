@@ -1,6 +1,22 @@
 {
     "data": {
-        "path": "data/temp/",
+        "platform": "local",
+        "info": {
+            "local": {
+                "base_path": "data/temp/",
+                "result_path": "data/result/"
+            },
+            "kaggle": {
+                "base_path": "../input/optiver-trading-at-the-close/",
+                "result_path": "./",
+                "settings_path": ""
+            },
+            "colab": {
+                "base_path": "data/temp/",
+                "result_path": "data/result/",
+                "src": ""
+            }
+        },
         "filename": "train.csv",
         "test_filename": "test.csv",
         "target_filename": "revealed_targets.csv",

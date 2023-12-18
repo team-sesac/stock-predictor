@@ -3,11 +3,13 @@ from utils import *
 class HyperParameter():
     
     def __init__(self,
-                    lr = 0.01,
-                    epochs = 100,
-                    hidden_units = [128, 128],
-                    embedding_dims = [20],
-                    drop_outs = [0]):
+                    lr,
+                    epochs,
+                    hidden_units,
+                    embedding_dims,
+                    drop_outs,
+                    train_batch_size,
+                    valid_batch_size):
     
         self._lr = lr
         self._epochs = epochs

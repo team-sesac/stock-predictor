@@ -135,7 +135,7 @@ class Trainer():
         eval["R2(\u2191)"] = r2
         return eval
     
-    def save_result(self, model_type, loss_type, learn_topic, path, description, test_set, feature_names):
+    def save_result(self, platform, model_type, loss_type, learn_topic, path, description, test_set, feature_names):
         epochs = len(self.train_epoch_losses)
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(9, 8))
         # loss graph
@@ -173,16 +173,16 @@ class Trainer():
         
         plt.tight_layout()
         
-        self._save_files(model=model_type, loss=loss_type, 
+        self._save_files(platform=platform, model=model_type, loss=loss_type, 
                             learn_topic=learn_topic, path=path, 
                             description=description, predict=(pred, test_y),
                             eval=eval, test_set=test_set, feature_names=feature_names)
         
-    def _save_files(self, model, loss, learn_topic, path, description, predict, eval, test_set, feature_names):
+    def _save_files(self, platform, model, loss, learn_topic, path, description, predict, eval, test_set, feature_names):
 
         
         time = get_current_time()
-        save_path = f"{path}{learn_topic}) {time} ({model}-{loss})"
+        save_path = f"{path}{platform} {learn_topic}) {time} ({model}-{loss})"
         mkdir(save_path)
         save_path += "/"
         
