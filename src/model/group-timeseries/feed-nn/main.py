@@ -62,7 +62,7 @@ def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyp
     # 3. Trainer
     trainer = Trainer(model=model, scaler=scaler, 
                             data_loaders=dataloaders, datasets=datasets, 
-                            hyper_parameter=hyper_parameter, loss=loss, huber_beta=set_hyper["huber_beta"])
+                            hyper_parameter=hyper_parameter, loss=loss_type, huber_beta=set_hyper["huber_beta"])
     trainer.train()
     trainer.save_result(model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
                         path=set_data["result_path"],
