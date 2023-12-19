@@ -9,16 +9,16 @@ def init(settings):
     mkdir(result_path)
     
     if platform == "colab":
-        from google.colab import drive
-        drive.mount('/content/drive')
 
-        DIR_PATH = ""
+        DIR_PATH = info["drive_path"]
         assert DIR_PATH is not None, "[!] Enter the foldername."
-
-        import sys
-        sys.path.append(f"/content/drive/MyDrive/{DIR_PATH}")
         
         # Change dariectory to current folder
-        # %cd /content/drive/MyDrive/$DIR_PATH
+        root_path = info["root_path"]
+        base_path = root_path + DIR_PATH + base_path
+        result_path = root_path + DIR_PATH + result_path
+        # return platform, base_path, result_path
+        print(f"base_path = {base_path}")
+        print(f"result_path = {result_path}")
     
     return platform, base_path, result_path

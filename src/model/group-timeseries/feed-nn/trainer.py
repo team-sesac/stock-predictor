@@ -8,7 +8,9 @@ import matplotlib.image as mpimg
 from scaler import Scaler
 from earlystop import EarlyStopping
 from hyperparameter import HyperParameter
-from utils import get_current_time, mkdir, write_text
+from utils import get_current_time_form, mkdir, write_text
+import time
+import textwrap
 
 class Trainer():
     
@@ -88,7 +90,7 @@ class Trainer():
     def _test_evaluate(self, test_set):
         
         pred = []
-        X, y = torch.tensor(test_set.iloc[:, :-1].values).float(), torch.tensor(test_set.iloc[:, [-1]].values).float()
+        X, y = torch.tensor(test_set[:, :-1]).float(), torch.tensor(test_set[:, [-1]]).float()
         with torch.no_grad():
             print(f"Evaluation Test Dataset")
             for i in tqdm(range(len(X)), desc="진행중"):
@@ -135,7 +137,7 @@ class Trainer():
         eval["R2(\u2191)"] = r2
         return eval
     
-    def save_result(self, platform, model_type, loss_type, learn_topic, path, description, test_set, feature_names):
+    def save_result(self, platform, model_type, loss_type, learn_topic, path, description, test_set, feature_names, processor_name, start_time):
         epochs = len(self.train_epoch_losses)
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(9, 8))
         # loss graph
@@ -151,7 +153,7 @@ class Trainer():
         pred, test_y = self._inverse_transform()
         step_pred, step_test_y = [], []
 
-        for idx in range(0, len(pred), 100):
+        for idx in range(0, len(pred), 1000):
             step_pred.append(pred[idx])
             step_test_y.append(test_y[idx])
             
@@ -160,9 +162,9 @@ class Trainer():
         axe_pred.set_ylabel("Close")
         axe_pred.legend()
         
-        eval = self._perform_eval_metrics(pred=pred, y=test_y)
+        valid_eval = self._perform_eval_metrics(pred=pred, y=test_y)
         axe_eval = axes[2]
-        evals = eval.items()
+        evals = valid_eval.items()
         x = 0.0
         y = 0.9
         for k, v in evals:
@@ -176,13 +178,14 @@ class Trainer():
         self._save_files(platform=platform, model=model_type, loss=loss_type, 
                             learn_topic=learn_topic, path=path, 
                             description=description, predict=(pred, test_y),
-                            eval=eval, test_set=test_set, feature_names=feature_names)
+                            valid_eval=valid_eval, test_set=test_set, feature_names=feature_names, processor_name=processor_name,
+                            start_time=start_time)
         
-    def _save_files(self, platform, model, loss, learn_topic, path, description, predict, eval, test_set, feature_names):
+    def _save_files(self, platform, model, loss, learn_topic, path, description, predict, valid_eval, test_set, feature_names, processor_name, start_time):
 
         
-        time = get_current_time()
-        save_path = f"{path}{platform} {learn_topic}) {time} ({model}-{loss})"
+        time_str = get_current_time_form()
+        save_path = f"{path}{platform} {learn_topic}) {time_str} ({model}-{loss})"
         mkdir(save_path)
         save_path += "/"
         
@@ -195,7 +198,12 @@ class Trainer():
         }, model_path)
                 
         description_path = save_path + f"[{model}] description.txt"
-        text = f"<description> model: {model}\n{description}\nfeature_names : {str(feature_names)}"
+        text = textwrap.dedent(f"""\
+<description> model: {model}
+description : {description}
+preprocessor : {processor_name}
+feature_names : {str(feature_names)}
+time : {round((time.time() - start_time)/60)} minute""")
         write_text(path=description_path, text=text)
         
         # 1. 하이퍼 파라미터 저장
@@ -205,6 +213,8 @@ class Trainer():
             hyper_dict[key] = str(value)
         pd.DataFrame(data=hyper_dict, index=[0]).to_csv(hyper_parameter_path, index=False)
         
+        print(f"loss train = {self.train_epoch_losses}")
+        print(f"loss valid = {self.valid_epoch_losses}")
         # 2. 손실함수
         epoch_loss_dict = {
             "train": [ torch.round(torch.tensor(loss), decimals=4).item() for loss in self.train_epoch_losses],
@@ -224,7 +234,7 @@ class Trainer():
         
         # 4. 검증 데이터 평가
         valid_evaluation_path = save_path + "valid_evaluations.csv"
-        pd.DataFrame(eval, index=[0]).to_csv(valid_evaluation_path, index=False)
+        pd.DataFrame(valid_eval, index=[0]).to_csv(valid_evaluation_path, index=False)
         
         # 5. 테스트 데이터 평가
         test_pred, test_y = self._test_evaluate(test_set=test_set)

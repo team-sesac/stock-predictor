@@ -2,12 +2,20 @@ from .preprocessor import Preprocessor
 
 class DefaultPreprocessor(Preprocessor):
 
+    def name(self) -> str:
+        return "default"
+
     # override
-    def execute_x(self, df):
+    def execute_x(self, data, target=None):
         # preprocess code
-        df = df.ffill().fillna(0)
-        df = df.drop(labels=["date_id", "time_id", "row_id", "target"], axis=1)
-        return df
+        drop_labels = ["date_id", "time_id", "row_id"]
+        if target is not None:
+            data = data.dropna(subset=[target])
+            drop_labels.append(target)
+        data = data.ffill().fillna(0)
+        data = data.drop(labels=drop_labels, axis=1)
+        return data
     
-    def execute_y(self, df, target):
-        return df[target].ffill().fillna(0)
+    def execute_y(self, data, target):
+        data = data.dropna(subset=[target])
+        return data[target].ffill().fillna(0)

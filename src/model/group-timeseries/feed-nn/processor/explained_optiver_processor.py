@@ -8,17 +8,21 @@ import numpy as np
 
 class ExplainedOptiverProcessor(Preprocessor):
     
-    def execute_x(self, df):
-        df = df.dropna(subset=["target"])
-        df.reset_index(drop=True, inplace=True)
-        self._set_data(df)
-        df.ffill().fillna(0, inplace=True)
-        df = self._generate_all_features(df)
-        return df
+    def name(self) -> str:
+        return "explaind optiver"
     
-    def execute_y(self, df, target):
-        df = df.dropna(subset=[target])
-        return df.ffill().fillna(0)
+    def execute_x(self, data, target=None):
+        if target is not None:
+            data = data.dropna(subset=[target])
+        data = data.reset_index(drop=True)
+        data = data.ffill().fillna(0)
+        self._set_data(data)
+        data = self._generate_all_features(data, target)
+        return data
+    
+    def execute_y(self, data, target):
+        data = data.dropna(subset=[target])
+        return data[target]
     
     def _set_data(self, df):
         self.global_stock_id_feats = {
@@ -50,15 +54,20 @@ class ExplainedOptiverProcessor(Preprocessor):
         ]
         self.weights = {int(k):v for k,v in enumerate(self.weights)}
     
-    def _generate_all_features(self, df):
-        cols = [ c for c in df.columns if c not in ["row_id", "time_id", "target"] ]
-        df = df[cols]
-        df = self._imbalance_features(df)
-        gc.collect()
-        df = self._other_features(df)
-        gc.collect()
-        feature_name = [ i for i in df.columns if i not in ["row_id", "time_id", "date_id", "target"] ]
-        return df[feature_name]
+    def _generate_all_features(self, data, target):
+        # cols = [ c for c in df.columns if c not in ["row_id", "time_id", "target"] ]
+        # df = df[cols]
+        drop_labels = ["row_id", "time_id"]
+        if target is not None:
+            drop_labels.append(target)
+        data = data.drop(labels=drop_labels, axis=1)
+        # df = self._imbalance_features(df)
+        # gc.collect()
+        # df = self._other_features(df)
+        # gc.collect()
+        # feature_name = [ i for i in df.columns if i not in ["row_id", "time_id", "date_id", "target"] ]
+        data = data.drop(labels=["date_id"], axis=1)
+        return data
         
     
     def _imbalance_features(self, df):

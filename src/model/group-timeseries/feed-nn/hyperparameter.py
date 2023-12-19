@@ -17,6 +17,8 @@ class HyperParameter():
         self.embedding_dims = embedding_dims
         self._drop_outs = drop_outs
         self._device = get_device()
+        self.train_batch_size = train_batch_size
+        self.valid_batch_size = valid_batch_size
         print(f"device - {self._device}")
         print(f"count - {torch.cuda.device_count()}")
         if torch.cuda.device_count() > 0:

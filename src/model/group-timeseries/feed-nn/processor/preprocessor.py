@@ -3,7 +3,11 @@ from abc import ABC, abstractmethod
 class Preprocessor(ABC):
 
     @abstractmethod
-    def execute_x(self, data):
+    def name(self) -> str:
+        pass
+
+    @abstractmethod
+    def execute_x(self, data, target=None):
         pass
     
     @abstractmethod

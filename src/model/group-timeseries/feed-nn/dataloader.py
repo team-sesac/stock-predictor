@@ -3,6 +3,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from scaler import Scaler
 import numpy as np
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 class FeedForwardDataLoader():
     
@@ -13,30 +14,28 @@ class FeedForwardDataLoader():
         self.target = target
         self.scaler = scaler
     
-    def make_dataset(self, train_size: float, train_batch_size: int, valid_batch_size: int):
-
+    def make_dataset(self, test_size: float, train_batch_size: int, valid_batch_size: int):
+        
         self.scaler.fit_x(self.train.iloc[:, 1:])
         self.scaler.fit_y(self.target)
         self.train.iloc[:, 1:] = self.scaler.transform_x(self.train.iloc[:, 1:])
         self.target.iloc[:] = self.scaler.transform_y(self.target)
 
         concat = pd.concat([self.train, self.target], axis=1)
-        
         grouped_data = concat.groupby("stock_id")
         train_x_array, train_y_array = [], []
         test_x_array, test_y_array = [], []
         for _, data in grouped_data:
-            train_size = int(len(data) * 0.9)
-            train = data[:train_size]
-            test = data[train_size:]
-            train_x_array.append(train.iloc[:, :-1])
-            train_y_array.append(train.iloc[:, [-1]])
-            test_x_array.append(test.iloc[:, :-1])
-            test_y_array.append(test.iloc[:, [-1]])
+            X, y = data.iloc[:, :-1], data.iloc[:, [-1]]
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42, shuffle=True)
+            
+            train_x_array.append(X_train)
+            train_y_array.append(y_train)
+            test_x_array.append(X_test)
+            test_y_array.append(y_test)
         
         train_x, train_y = pd.concat(train_x_array, axis=0, ignore_index=True), pd.concat(train_y_array, axis=0, ignore_index=True)
         test_x, test_y = pd.concat(test_x_array, axis=0, ignore_index=True), pd.concat(test_y_array, axis=0, ignore_index=True)
-
         train_dataset = TensorDataset(torch.FloatTensor(np.array(train_x)), torch.FloatTensor(np.array(train_y)))
         valid_dataset = TensorDataset(torch.FloatTensor(np.array(test_x)), torch.FloatTensor(np.array(test_y)))
         

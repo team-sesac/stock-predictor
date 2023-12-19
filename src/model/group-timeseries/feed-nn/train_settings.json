@@ -8,13 +8,13 @@
             },
             "kaggle": {
                 "base_path": "../input/optiver-trading-at-the-close/",
-                "result_path": "./",
-                "settings_path": ""
+                "result_path": "./"
             },
             "colab": {
+                "root_path": "/content/drive/MyDrive/",
                 "base_path": "data/temp/",
                 "result_path": "data/result/",
-                "src": ""
+                "drive_path": "04. project/ai/kaggle/optiver-stock-2023/"
             }
         },
         "filename": "train.csv",
@@ -32,13 +32,13 @@
     "loss": "MAE",
     "is_infer": false,
     "hyper": {
-        "train_size": 0.9,
+        "test_size": 0.05,
         "train_batch_size": 64,
         "valid_batch_size": 1000,
         "lr": 0.001,
-        "epochs": 10,
-        "hidden_units": [128, 128, 64],
-        "drop_outs": [0.1, 0.2, 0.2, 0.2],
+        "epochs": 1,
+        "hidden_units": [3, 3],
+        "drop_outs": [0.1, 0.2, 0.2],
         "huber_beta": 1.0,
         "embedding_dims": [20]
     }

@@ -48,8 +48,9 @@ class FeedForwardNN(nn.Module):
         
         # Embedding categorical features
         embeddings = [ embedding(categorical[:, i].to(torch.int)) for i, embedding in enumerate(self.embeddings) ]
+        # print(f"embeddings = {embeddings}")
         flattened_embeddings = [ embedding.view(embedding.size(0), -1) for embedding in embeddings ]
-
+        # print(f"flattened_embeddings = {flattened_embeddings}")
         # Concatenate continuous and flattened categorical features
         concatenated = torch.cat([continuous] + flattened_embeddings, dim=1)
 
@@ -59,7 +60,7 @@ class FeedForwardNN(nn.Module):
 
         # Apply linear transformation for concatenated features
         x = self.linear_concatenated_act(self.linear_concatenated(concatenated))
-
+        
         # Apply batch normalization and dropout
         x = self.batch_norm_layers[0](x)
 
