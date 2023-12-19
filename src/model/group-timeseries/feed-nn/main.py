@@ -71,12 +71,19 @@ df_test_y = scaler.transform_y(df_test_y.iloc[:])
 
 test_set = np.hstack([df_test_x, df_test_y])
 
-model = FeedForwardNN(num_continuous_features=num_continuous_features, num_categorical_features=num_categorical_features, hyper_parameter=hyper_parameter)
+model = FeedForwardNN(num_continuous_features=num_continuous_features,
+                            num_categorical_features=num_categorical_features,
+                            hyper_parameter=hyper_parameter).to(hyper_parameter.get_device())
 
 trainer = Trainer(model=model, scaler=scaler, 
-                        data_loaders=dataloaders, datasets=datasets, 
-                        hyper_parameter=hyper_parameter, loss=loss_type, huber_beta=set_hyper["huber_beta"])
+                    data_loaders=dataloaders, datasets=datasets, 
+                    hyper_parameter=hyper_parameter, loss=loss_type, huber_beta=set_hyper["huber_beta"])
 trainer.train()
+        
+trainer.save_result(platform=platform, model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
+                    path=result_path, description=set_data["description"], test_set=test_set, feature_names=feature_names,
+                    processor_name=preprocessor.name())
+#trainer.visualization()
 
 if settings["is_infer"]:
     import optiver2023
@@ -88,8 +95,3 @@ if settings["is_infer"]:
         pred = model(X[:, 1:], X[:, [0]])
         sample_prediction["target"] = scaler.inverse_y(pred)
         env.predict(sample_prediction)
-        
-trainer.save_result(platform=platform, model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
-                    path=result_path, description=set_data["description"], test_set=test_set, feature_names=feature_names,
-                    processor_name=preprocessor.name())
-#trainer.visualization()

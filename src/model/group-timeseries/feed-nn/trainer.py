@@ -18,7 +18,7 @@ class Trainer():
         train_data_loader, valid_data_loader = data_loaders
         train_data_sets, valid_data_sets = datasets
         self.device = hyper_parameter.get_device()
-        self.model = model.to(self.device)
+        self.model = model
         self.loss_fn = self._get_loss_fn(loss=loss.upper(), huber_beta=huber_beta).to(self.device)
         self.optimizer = torch.optim.Adam(params=model.parameters(), lr=hyper_parameter.get_lr())
         self.epochs = hyper_parameter.get_epochs()

@@ -39,8 +39,8 @@
         "valid_batch_size": 1000,
         "lr": 0.0005,
         "epochs": 10,
-        "hidden_units": [1024, 1024],
-        "drop_outs": [0.1, 0.2, 0.3],
+        "hidden_units": [128, 128],
+        "drop_outs": [0.1, 0.2, 0.2],
         "huber_beta": 1.0,
         "embedding_dims": [20]
     }
