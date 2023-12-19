@@ -91,7 +91,7 @@ if settings["is_infer"]:
     iter_test = env.iter_test()
     
     for (test, revealed_targets, sample_prediction) in iter_test:
-        X = torch.FloatTensor(preprocessor.execute_x(data=test)).to(hyper_parameter.get_device())
+        X = torch.FloatTensor(preprocessor.execute_x(data=test).values).to(hyper_parameter.get_device())
         pred = model(X[:, 1:], X[:, [0]])
         sample_prediction["target"] = scaler.inverse_y(pred)
         env.predict(sample_prediction)
