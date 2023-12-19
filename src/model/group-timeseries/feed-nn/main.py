@@ -15,11 +15,12 @@ try:
     settings = load_setting(path="src/model/group-timeseries/feed-nn/train_settings.json")
 except FileNotFoundError as e:
     settings = load_setting(path="./train_settings.json")
-platform, base_path, result_path = init(settings)
+platform, result_path, data_list = init(settings)
+train_data_set, test_data_set, target_data_set = data_list
 set_data, set_hyper = settings["data"], settings["hyper"]
 model_type, loss_type = settings["model"], settings["loss"]
 
-data_origin = pd.read_csv(base_path + set_data["filename"])
+data_origin = pd.read_csv(train_data_set)
 preprocessor = ExplainedOptiverProcessor()
 df_train_x = preprocessor.execute_x(data=data_origin, target=set_data["target"]) # without target
 df_train_x = reduce_mem_usage(df_train_x)
@@ -40,6 +41,7 @@ hyper_parameter = HyperParameter(lr=set_hyper["lr"],
 num_features = len(df_train_x.columns)
 
 num_categorical_features = [ len(data_origin[col].unique()) for col in set_data["categorical_features"] ]
+
 num_continuous_features = num_features - len(num_categorical_features)
 
 scaler = Scaler(scale_type=set_data["scale_type"])
@@ -51,8 +53,8 @@ dataloaders, datasets = dataloader.make_dataset(
     valid_batch_size=hyper_parameter.get_valid_batch_size()
 )
 
-test_revealed = pd.read_csv(base_path + "revealed_targets.csv")
-test_data = pd.read_csv(base_path + set_data["test_filename"])
+test_revealed = pd.read_csv(target_data_set)
+test_data = pd.read_csv(test_data_set)
 test_data = test_data.drop(labels=["currently_scored"], axis=1)
 
 df_test_x = preprocessor.execute_x(test_data)

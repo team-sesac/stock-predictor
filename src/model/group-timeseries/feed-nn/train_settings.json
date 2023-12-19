@@ -8,6 +8,7 @@
             },
             "kaggle": {
                 "base_path": "../input/optiver-trading-at-the-close/",
+                "test_path": "example_test_files/",
                 "result_path": "./"
             },
             "colab": {
