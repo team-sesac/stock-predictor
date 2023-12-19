@@ -91,7 +91,11 @@ if settings["is_infer"]:
     iter_test = env.iter_test()
     
     for (test, revealed_targets, sample_prediction) in iter_test:
-        X = torch.FloatTensor(preprocessor.execute_x(data=test).values).to(hyper_parameter.get_device())
-        pred = model(X[:, 1:], X[:, [0]])
-        sample_prediction["target"] = scaler.inverse_y(pred)
-        env.predict(sample_prediction)
+        X = preprocessor.execute_x(data=test)
+        X = X.drop(labels=["currently_scored"], axis=1).astype(float)
+        X = np.hstack([X.iloc[:, [0]], scaler.transform_x(X.iloc[:, 1:])])
+        X = torch.FloatTensor(X).to(hyper_parameter.get_device())
+        with torch.no_grad():
+            pred = model(X[:, 1:], X[:, [0]])
+            sample_prediction["target"] = scaler.inverse_y(pred.detach())
+            env.predict(sample_prediction)
