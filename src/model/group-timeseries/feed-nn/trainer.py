@@ -213,8 +213,6 @@ time : {round((time.time() - start_time)/60)} minute""")
             hyper_dict[key] = str(value)
         pd.DataFrame(data=hyper_dict, index=[0]).to_csv(hyper_parameter_path, index=False)
         
-        print(f"loss train = {self.train_epoch_losses}")
-        print(f"loss valid = {self.valid_epoch_losses}")
         # 2. 손실함수
         epoch_loss_dict = {
             "train": [ torch.round(torch.tensor(loss), decimals=4).item() for loss in self.train_epoch_losses],
