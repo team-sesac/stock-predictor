@@ -20,7 +20,7 @@ set_data, set_hyper = settings["data"], settings["hyper"]
 model_type, loss_type = settings["model"], settings["loss"]
 
 data_origin = pd.read_csv(base_path + set_data["filename"])
-preprocessor = DefaultPreprocessor()
+preprocessor = ExplainedOptiverProcessor()
 df_train_x = preprocessor.execute_x(data=data_origin, target=set_data["target"]) # without target
 df_train_x = reduce_mem_usage(df_train_x)
 df_train_y = preprocessor.execute_y(data=data_origin, target=set_data["target"])

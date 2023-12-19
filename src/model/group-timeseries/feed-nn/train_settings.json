@@ -37,9 +37,9 @@
         "train_batch_size": 64,
         "valid_batch_size": 1000,
         "lr": 0.0005,
-        "epochs": 5,
-        "hidden_units": [64, 32],
-        "drop_outs": [0.1, 0.2, 0.2],
+        "epochs": 10,
+        "hidden_units": [256, 128, 64],
+        "drop_outs": [0.1, 0.1, 0.1, 0.1],
         "huber_beta": 1.0,
         "embedding_dims": [20]
     }

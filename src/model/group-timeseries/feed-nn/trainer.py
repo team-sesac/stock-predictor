@@ -56,12 +56,13 @@ class Trainer():
             for x_train, y_train in self.train_data_loader:
 
                 x_train, y_train = x_train.to(self.device), y_train.to(self.device)
-                
+
                 # H(x) 계산
                 outputs = self.model(x_train[:, 1:], x_train[:, [0]])
                 
                 # cost 계산
-                loss = self.loss_fn(outputs, y_train)                    
+                loss = self.loss_fn(outputs, y_train)
+
                 # cost로 H(x) 개선
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -78,7 +79,7 @@ class Trainer():
                 for x_valid, y_valid in self.valid_data_loader:
                     x_valid, y_valid = x_valid.to(self.device), y_valid.to(self.device)
                     outputs = self.model(x_valid[:, 1:], x_valid[:, [0]])
-                    loss = self.loss_fn(outputs, y_valid)               
+                    loss = self.loss_fn(outputs, y_valid)
                     valid_avg_cost += loss.item()
                 self.valid_epoch_losses.append(valid_avg_cost / valid_total_batch)
             
