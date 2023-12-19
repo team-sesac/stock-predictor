@@ -9,7 +9,8 @@ class HyperParameter():
                     embedding_dims,
                     drop_outs,
                     train_batch_size,
-                    valid_batch_size):
+                    valid_batch_size,
+                    sample_size):
     
         self._lr = lr
         self._epochs = epochs
@@ -19,6 +20,7 @@ class HyperParameter():
         self._device = get_device()
         self.train_batch_size = train_batch_size
         self.valid_batch_size = valid_batch_size
+        self.sample_size = sample_size
         print(f"device - {self._device}")
         print(f"count - {torch.cuda.device_count()}")
         if torch.cuda.device_count() > 0:
@@ -41,3 +43,12 @@ class HyperParameter():
     
     def get_device(self):
         return self._device
+    
+    def get_train_batch_size(self):
+        return self.train_batch_size
+    
+    def get_valid_batch_size(self):
+        return self.valid_batch_size
+    
+    def get_sample_size(self):
+        return self.sample_size

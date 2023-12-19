@@ -13,8 +13,9 @@ class FeedForwardDataLoader():
         self.length_series = len(self.train)
         self.target = target
         self.scaler = scaler
+        self.seed = 42
     
-    def make_dataset(self, test_size: float, train_batch_size: int, valid_batch_size: int):
+    def make_dataset(self, sample_size: float, test_size: float, train_batch_size: int, valid_batch_size: int):
         
         self.scaler.fit_x(self.train.iloc[:, 1:])
         self.scaler.fit_y(self.target)
@@ -26,8 +27,9 @@ class FeedForwardDataLoader():
         train_x_array, train_y_array = [], []
         test_x_array, test_y_array = [], []
         for _, data in grouped_data:
-            X, y = data.iloc[:, :-1], data.iloc[:, [-1]]
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=42, shuffle=True)
+            X = data.iloc[:, :-1].sample(frac=sample_size, random_state=self.seed)
+            y = data.iloc[:, [-1]].sample(frac=sample_size, random_state=self.seed)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=self.seed, shuffle=True)
             
             train_x_array.append(X_train)
             train_y_array.append(y_train)

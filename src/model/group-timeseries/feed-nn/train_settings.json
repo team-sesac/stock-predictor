@@ -32,10 +32,11 @@
     "loss": "MAE",
     "is_infer": false,
     "hyper": {
-        "test_size": 0.05,
+        "sample_size": 0.5,
+        "test_size": 0.1,
         "train_batch_size": 64,
         "valid_batch_size": 1000,
-        "lr": 0.001,
+        "lr": 0.0005,
         "epochs": 5,
         "hidden_units": [64, 32],
         "drop_outs": [0.1, 0.2, 0.2],

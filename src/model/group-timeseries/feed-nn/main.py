@@ -34,20 +34,21 @@ hyper_parameter = HyperParameter(lr=set_hyper["lr"],
                                     embedding_dims=set_hyper["embedding_dims"],
                                     drop_outs=set_hyper["drop_outs"],
                                     train_batch_size=set_hyper["train_batch_size"],
-                                    valid_batch_size=set_hyper["valid_batch_size"])
+                                    valid_batch_size=set_hyper["valid_batch_size"],
+                                    sample_size=set_hyper["sample_size"])
 
 num_features = len(df_train_x.columns)
 
 num_categorical_features = [ len(data_origin[col].unique()) for col in set_data["categorical_features"] ]
 num_continuous_features = num_features - len(num_categorical_features)
 
-# 1. DataLodaer
 scaler = Scaler(scale_type=set_data["scale_type"])
 dataloader = FeedForwardDataLoader(train=df_train_x, target=df_train_y, scaler=scaler)
 dataloaders, datasets = dataloader.make_dataset(
+    sample_size=hyper_parameter.get_sample_size(),
     test_size=set_hyper["test_size"],
-    train_batch_size=set_hyper["train_batch_size"],
-    valid_batch_size=set_hyper["valid_batch_size"]
+    train_batch_size=hyper_parameter.get_train_batch_size(),
+    valid_batch_size=hyper_parameter.get_valid_batch_size()
 )
 
 test_revealed = pd.read_csv(base_path + "revealed_targets.csv")
@@ -69,18 +70,12 @@ test_set = np.hstack([df_test_x, df_test_y])
 
 def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyper_parameter):
     
-    # 2. Model
     model = FeedForwardNN(num_continuous_features=num_continuous_features, num_categorical_features=num_categorical_features, hyper_parameter=hyper_parameter)
 
-    # 3. Trainer
     trainer = Trainer(model=model, scaler=scaler, 
                             data_loaders=dataloaders, datasets=datasets, 
                             hyper_parameter=hyper_parameter, loss=loss_type, huber_beta=set_hyper["huber_beta"])
     trainer.train()
-    trainer.save_result(platform=platform, model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
-                        path=result_path, description=set_data["description"], test_set=test_set, feature_names=feature_names,
-                        processor_name=preprocessor.name())
-    #trainer.visualization()
     
     if settings["is_infer"]:
         import optiver2023
@@ -88,8 +83,15 @@ def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyp
         iter_test = env.iter_test()
         
         for (test, revealed_targets, sample_prediction) in iter_test:
-            pred = model(test)
+            X = preprocessor.execute_x(data=test, target=set_data["target"])
+            pred = model(X[:, 1:], X[:, [0]])
             sample_prediction["target"] = scaler.inverse_y(pred)
+            env.predict(sample_prediction)
+            
+    trainer.save_result(platform=platform, model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
+                        path=result_path, description=set_data["description"], test_set=test_set, feature_names=feature_names,
+                        processor_name=preprocessor.name())
+    #trainer.visualization()
 
 learn(model_type=model_type, loss_type=loss_type,
         dataloaders=dataloaders, datasets=datasets, set_data=set_data, 
