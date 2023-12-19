@@ -8,7 +8,6 @@ from initializr import *
 from utils import *
 from processor.default_processor import DefaultPreprocessor
 from processor.explained_optiver_processor import ExplainedOptiverProcessor
-import time
 
 set_torch_seed(seed=42)
 
@@ -68,7 +67,7 @@ df_test_y = scaler.transform_y(df_test_y.iloc[:])
 
 test_set = np.hstack([df_test_x, df_test_y])
 
-def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyper_parameter, start_time):
+def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyper_parameter):
     
     # 2. Model
     model = FeedForwardNN(num_continuous_features=num_continuous_features, num_categorical_features=num_categorical_features, hyper_parameter=hyper_parameter)
@@ -80,7 +79,7 @@ def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyp
     trainer.train()
     trainer.save_result(platform=platform, model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
                         path=result_path, description=set_data["description"], test_set=test_set, feature_names=feature_names,
-                        processor_name=preprocessor.name(), start_time=start_time)
+                        processor_name=preprocessor.name())
     #trainer.visualization()
     
     if settings["is_infer"]:
@@ -92,7 +91,6 @@ def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyp
             pred = model(test)
             sample_prediction["target"] = scaler.inverse_y(pred)
 
-start_time = time.time()
 learn(model_type=model_type, loss_type=loss_type,
         dataloaders=dataloaders, datasets=datasets, set_data=set_data, 
-        set_hyper=set_hyper, hyper_parameter=hyper_parameter, start_time=start_time)
+        set_hyper=set_hyper, hyper_parameter=hyper_parameter)

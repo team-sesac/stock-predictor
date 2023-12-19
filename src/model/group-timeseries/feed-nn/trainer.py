@@ -33,6 +33,7 @@ class Trainer():
         self.hyper_parameter = hyper_parameter
         self.result = {}
         self.loss = loss.upper()
+        self.start_time  = time.time()
         
     def _get_loss_fn(self, loss, huber_beta):
         if loss == "MSE":
@@ -137,7 +138,7 @@ class Trainer():
         eval["R2(\u2191)"] = r2
         return eval
     
-    def save_result(self, platform, model_type, loss_type, learn_topic, path, description, test_set, feature_names, processor_name, start_time):
+    def save_result(self, platform, model_type, loss_type, learn_topic, path, description, test_set, feature_names, processor_name):
         epochs = len(self.train_epoch_losses)
         fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(9, 8))
         # loss graph
@@ -178,10 +179,9 @@ class Trainer():
         self._save_files(platform=platform, model=model_type, loss=loss_type, 
                             learn_topic=learn_topic, path=path, 
                             description=description, predict=(pred, test_y),
-                            valid_eval=valid_eval, test_set=test_set, feature_names=feature_names, processor_name=processor_name,
-                            start_time=start_time)
+                            valid_eval=valid_eval, test_set=test_set, feature_names=feature_names, processor_name=processor_name)
         
-    def _save_files(self, platform, model, loss, learn_topic, path, description, predict, valid_eval, test_set, feature_names, processor_name, start_time):
+    def _save_files(self, platform, model, loss, learn_topic, path, description, predict, valid_eval, test_set, feature_names, processor_name):
 
         
         time_str = get_current_time_form()
@@ -203,7 +203,7 @@ class Trainer():
 description : {description}
 preprocessor : {processor_name}
 feature_names : {str(feature_names)}
-time : {round((time.time() - start_time)/60)} minute""")
+time : {round((time.time() - self.start_time)/60)} minute""")
         write_text(path=description_path, text=text)
         
         # 1. 하이퍼 파라미터 저장
