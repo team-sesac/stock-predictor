@@ -1,4 +1,5 @@
 import pandas as pd
+import torch
 from dataloader import FeedForwardDataLoader
 from model import FeedForwardNN
 from trainer import Trainer
@@ -85,7 +86,7 @@ def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyp
         iter_test = env.iter_test()
         
         for (test, revealed_targets, sample_prediction) in iter_test:
-            X = preprocessor.execute_x(data=test, target=set_data["target"])
+            X = torch.FloatTensor(preprocessor.execute_x(data=test)).to(hyper_parameter.get_device())
             pred = model(X[:, 1:], X[:, [0]])
             sample_prediction["target"] = scaler.inverse_y(pred)
             env.predict(sample_prediction)

@@ -59,7 +59,8 @@ class ExplainedOptiverProcessor(Preprocessor):
         drop_labels = ["row_id", "time_id"]
         if target is not None:
             drop_labels.append(target)
-        data = data.drop(labels=drop_labels, axis=1)
+        cols = [ col for col in data.columns if col not in drop_labels ]
+        data = data[cols]
         data = self._imbalance_features(data)
         gc.collect()
         # data = self._other_features(data)
