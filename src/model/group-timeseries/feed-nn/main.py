@@ -1,4 +1,5 @@
 import pandas as pd
+import torch
 from dataloader import FeedForwardDataLoader
 from model import FeedForwardNN
 from trainer import Trainer
@@ -15,12 +16,13 @@ try:
     settings = load_setting(path="src/model/group-timeseries/feed-nn/train_settings.json")
 except FileNotFoundError as e:
     settings = load_setting(path="./train_settings.json")
-platform, base_path, result_path = init(settings)
+platform, result_path, data_list = init(settings)
+train_data_set, test_data_set, target_data_set = data_list
 set_data, set_hyper = settings["data"], settings["hyper"]
 model_type, loss_type = settings["model"], settings["loss"]
 
-data_origin = pd.read_csv(base_path + set_data["filename"])
-preprocessor = DefaultPreprocessor()
+data_origin = pd.read_csv(train_data_set)
+preprocessor = ExplainedOptiverProcessor()
 df_train_x = preprocessor.execute_x(data=data_origin, target=set_data["target"]) # without target
 df_train_x = reduce_mem_usage(df_train_x)
 df_train_y = preprocessor.execute_y(data=data_origin, target=set_data["target"])
@@ -40,6 +42,7 @@ hyper_parameter = HyperParameter(lr=set_hyper["lr"],
 num_features = len(df_train_x.columns)
 
 num_categorical_features = [ len(data_origin[col].unique()) for col in set_data["categorical_features"] ]
+
 num_continuous_features = num_features - len(num_categorical_features)
 
 scaler = Scaler(scale_type=set_data["scale_type"])
@@ -51,8 +54,8 @@ dataloaders, datasets = dataloader.make_dataset(
     valid_batch_size=hyper_parameter.get_valid_batch_size()
 )
 
-test_revealed = pd.read_csv(base_path + "revealed_targets.csv")
-test_data = pd.read_csv(base_path + set_data["test_filename"])
+test_revealed = pd.read_csv(target_data_set)
+test_data = pd.read_csv(test_data_set)
 test_data = test_data.drop(labels=["currently_scored"], axis=1)
 
 df_test_x = preprocessor.execute_x(test_data)
@@ -68,31 +71,27 @@ df_test_y = scaler.transform_y(df_test_y.iloc[:])
 
 test_set = np.hstack([df_test_x, df_test_y])
 
-def learn(model_type, loss_type, dataloaders, datasets, set_data, set_hyper, hyper_parameter):
-    
-    model = FeedForwardNN(num_continuous_features=num_continuous_features, num_categorical_features=num_categorical_features, hyper_parameter=hyper_parameter)
+model = FeedForwardNN(num_continuous_features=num_continuous_features,
+                            num_categorical_features=num_categorical_features,
+                            hyper_parameter=hyper_parameter).to(hyper_parameter.get_device())
 
-    trainer = Trainer(model=model, scaler=scaler, 
-                            data_loaders=dataloaders, datasets=datasets, 
-                            hyper_parameter=hyper_parameter, loss=loss_type, huber_beta=set_hyper["huber_beta"])
-    trainer.train()
-    
-    if settings["is_infer"]:
-        import optiver2023
-        env = optiver2023.make_env()
-        iter_test = env.iter_test()
+trainer = Trainer(model=model, scaler=scaler, 
+                    data_loaders=dataloaders, datasets=datasets, 
+                    hyper_parameter=hyper_parameter, loss=loss_type, huber_beta=set_hyper["huber_beta"])
+trainer.train()
         
-        for (test, revealed_targets, sample_prediction) in iter_test:
-            X = preprocessor.execute_x(data=test, target=set_data["target"])
-            pred = model(X[:, 1:], X[:, [0]])
-            sample_prediction["target"] = scaler.inverse_y(pred)
-            env.predict(sample_prediction)
-            
-    trainer.save_result(platform=platform, model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
-                        path=result_path, description=set_data["description"], test_set=test_set, feature_names=feature_names,
-                        processor_name=preprocessor.name())
-    #trainer.visualization()
+trainer.save_result(platform=platform, model_type=model_type, loss_type=loss_type, learn_topic=set_data["learn_topic"], 
+                    path=result_path, description=set_data["description"], test_set=test_set, feature_names=feature_names,
+                    processor_name=preprocessor.name())
+#trainer.visualization()
 
-learn(model_type=model_type, loss_type=loss_type,
-        dataloaders=dataloaders, datasets=datasets, set_data=set_data, 
-        set_hyper=set_hyper, hyper_parameter=hyper_parameter)
+if settings["is_infer"]:
+    import optiver2023
+    env = optiver2023.make_env()
+    iter_test = env.iter_test()
+    
+    for (test, revealed_targets, sample_prediction) in iter_test:
+        X = torch.FloatTensor(preprocessor.execute_x(data=test).values).to(hyper_parameter.get_device())
+        pred = model(X[:, 1:], X[:, [0]])
+        sample_prediction["target"] = scaler.inverse_y(pred)
+        env.predict(sample_prediction)

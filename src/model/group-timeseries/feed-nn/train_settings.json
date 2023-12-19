@@ -8,6 +8,7 @@
             },
             "kaggle": {
                 "base_path": "../input/optiver-trading-at-the-close/",
+                "test_path": "example_test_files/",
                 "result_path": "./"
             },
             "colab": {
@@ -32,13 +33,13 @@
     "loss": "MAE",
     "is_infer": false,
     "hyper": {
-        "sample_size": 0.5,
+        "sample_size": 0.7,
         "test_size": 0.1,
         "train_batch_size": 64,
         "valid_batch_size": 1000,
         "lr": 0.0005,
-        "epochs": 5,
-        "hidden_units": [64, 32],
+        "epochs": 10,
+        "hidden_units": [128, 128],
         "drop_outs": [0.1, 0.2, 0.2],
         "huber_beta": 1.0,
         "embedding_dims": [20]

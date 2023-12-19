@@ -16,10 +16,6 @@ class FeedForwardNN(nn.Module):
             nn.Embedding(num_categories, embedding_dim) for num_categories, embedding_dim in zip(num_categorical_features, self.embedding_dims)
         ])
 
-        # Linear layer for continuous features
-        # self.linear_continuous = nn.Linear(num_continuous_features, self.hidden_units[0])
-        # self.linear_continuous_act = nn.ReLU()
-        
         # Linear layer after concatenating continuous and flattened categorical features
         self.linear_concatenated = nn.Linear(num_continuous_features + sum(self.embedding_dims), self.hidden_units[0])
         self.linear_concatenated_act = nn.ReLU()
@@ -48,15 +44,12 @@ class FeedForwardNN(nn.Module):
         
         # Embedding categorical features
         embeddings = [ embedding(categorical[:, i].to(torch.int)) for i, embedding in enumerate(self.embeddings) ]
-        # print(f"embeddings = {embeddings}")
+        if torch.isnan(embeddings[0][0][0]):
+            raise RuntimeError("Out of memory for computation.")
         flattened_embeddings = [ embedding.view(embedding.size(0), -1) for embedding in embeddings ]
-        # print(f"flattened_embeddings = {flattened_embeddings}")
+
         # Concatenate continuous and flattened categorical features
         concatenated = torch.cat([continuous] + flattened_embeddings, dim=1)
-
-        # Apply linear transformation for continuous features
-        # x = self.linear_continuous(continuous)
-        # x = self.linear_continuous_act(x)
 
         # Apply linear transformation for concatenated features
         x = self.linear_concatenated_act(self.linear_concatenated(concatenated))
@@ -64,8 +57,6 @@ class FeedForwardNN(nn.Module):
         # Apply batch normalization and dropout
         x = self.batch_norm_layers[0](x)
 
-        # xx = self.dropout_layers[0](x)
-        # x = F.dropout(x, p=self.dropout_layers[0], training=True)
         x = self.dropout_layers[0](x)
 
         # Apply hidden layers with batch normalization, ReLU, and dropout
